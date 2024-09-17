@@ -34,6 +34,8 @@ test_deps = [
     "pytest",
     "pytest-cov",
     "coveralls",
+    "numpy",
+    "pandas",
     "validate_version_code",
     "codacy-coverage",
     "pytest_readme",
