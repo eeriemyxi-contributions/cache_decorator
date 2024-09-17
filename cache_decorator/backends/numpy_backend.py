@@ -1,3 +1,6 @@
+"""Numpy backend for cache_decorator."""
+
+from typing import Dict
 from .backend_template import BackendTemplate
 from .pandas_csv_backend import PandasCsvBackend
 
@@ -39,14 +42,14 @@ try:
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
             return NumpyBackend.support_path(path) and (
                 isinstance(obj_to_serialize, np.ndarray)
-                or isinstance(obj_to_serialize, dict)
+                or isinstance(obj_to_serialize, Dict)
                 and all(isinstance(e, np.ndarray) for e in obj_to_serialize.values())
                 or isinstance(obj_to_serialize, (list, tuple))
                 and all(isinstance(e, np.ndarray) for e in obj_to_serialize)
             )
 
         @staticmethod
-        def can_deserialize(metadata: dict, path: str) -> bool:
+        def can_deserialize(metadata: Dict, path: str) -> bool:
             pandas_test = (
                 PandasCsvBackend is not None
                 and PandasCsvBackend.can_deserialize(metadata, path)
@@ -58,7 +61,7 @@ try:
                 and metadata["type"] == "numpy"
             )
 
-        def dump(self, obj_to_serialize: object, path: str) -> dict:
+        def dump(self, obj_to_serialize: object, path: str) -> Dict:
             if self._pandas_backend is not None and self._pandas_backend.support_path(
                 path
             ):
@@ -72,7 +75,7 @@ try:
             if path.endswith(".npy"):
                 with open(path, "wb") as f:
                     np.save(f, obj_to_serialize)
-            elif isinstance(obj_to_serialize, dict):
+            elif isinstance(obj_to_serialize, Dict):
                 np.savez_compressed(path, **obj_to_serialize)
             elif isinstance(obj_to_serialize, (list, tuple, set)):
                 np.savez_compressed(path, *obj_to_serialize)
@@ -81,12 +84,10 @@ try:
 
             return {"type": str(type(obj_to_serialize))}
 
-        def load(self, metadata: dict, path: str) -> object:
+        def load(self, metadata: Dict, path: str) -> object:
             if self._pandas_backend is not None and self._pandas_backend.support_path(
                 path
             ):
-                import pandas as pd
-
                 return self._pandas_backend.load(metadata, path).values
             if path.endswith(".npy"):
                 with open(path, "rb") as f:

@@ -1,4 +1,6 @@
-from typing import List
+"""This module defines the interface that all the backends must implement."""
+
+from typing import Dict
 
 
 class BackendTemplate:
@@ -34,7 +36,7 @@ class BackendTemplate:
             "This backend function has to be implemented by its subclass."
         )
 
-    def dump(self, obj_to_serialize: object, path: str) -> dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:
         """Serialize and save the object at the given path.
         If this backend needs extra informations to de-serialize data, it can
         return them as a dictionary which will be serialized as a json."""
@@ -43,13 +45,13 @@ class BackendTemplate:
         )
 
     @staticmethod
-    def can_deserialize(metadata: dict, path: str) -> bool:
+    def can_deserialize(metadata: Dict, path: str) -> bool:
         """Must return if the current backend can handle the type of data."""
         raise NotImplementedError(
             "This backend function has to be implemented by its subclass."
         )
 
-    def load(self, metadata: dict, path: str) -> object:
+    def load(self, metadata: Dict, path: str) -> object:
         """Load the method at the given path. If the medod need extra
         informations it can read them form the metadata dictionary which is
         the return value of the dump method."""

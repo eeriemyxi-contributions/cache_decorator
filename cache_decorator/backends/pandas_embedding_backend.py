@@ -1,5 +1,8 @@
+"""This module contains the PandasEmbeddingBackend class, which is a backend
+for the cache_decorator module."""
+
+from typing import Dict
 from .backend_template import BackendTemplate
-import warnings
 
 try:
     import pickle
@@ -25,9 +28,6 @@ try:
             ".embedding.xz": ":xz",
         }
 
-        def __init__(self, load_kwargs, dump_kwargs):
-            super(PandasEmbeddingBackend, self).__init__(load_kwargs, dump_kwargs)
-
         @staticmethod
         def support_path(path: str) -> bool:
             return any(
@@ -36,7 +36,7 @@ try:
             )
 
         @staticmethod
-        def can_deserialize(metadata: dict, path: str) -> bool:
+        def can_deserialize(metadata: Dict, path: str) -> bool:
             return PandasEmbeddingBackend.support_path(path)
 
         @staticmethod
@@ -47,7 +47,7 @@ try:
                 and is_numeric_dataframe(obj_to_serialize)
             )
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
+        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:
 
             open_prefix = next(
                 v for k, v in self.SUPPORTED_EXTENSIONS.items() if path.endswith(k)
@@ -76,7 +76,7 @@ try:
                 "type": "pandas_embedding",
             }
 
-        def load(self, metadata: dict, path: str) -> object:
+        def load(self, metadata: Dict, path: str) -> object:
             with tarfile.open(path, mode="r", **self._load_kwargs) as tar:
                 columns = pickle.load(tar.extractfile("columns.pkl"))
                 index = pickle.load(tar.extractfile("index.pkl"))

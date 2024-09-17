@@ -3,6 +3,7 @@
 import os
 import tarfile
 import tempfile
+from typing import Dict
 from .backend_template import BackendTemplate
 
 
@@ -10,7 +11,7 @@ try:
 
     def create_tar(src_dir, tar_file, extension):
         with tarfile.open(tar_file, "w:%s" % extension) as tar_handle:
-            for root, dirs, files in os.walk(src_dir):
+            for root, _dirs, files in os.walk(src_dir):
                 for file in files:
                     p = os.path.join(root, file)
                     tar_handle.add(p, arcname=p[len(src_dir) :])
@@ -44,14 +45,14 @@ try:
             )
 
         @staticmethod
-        def can_deserialize(metadata: dict, path: str) -> bool:
+        def can_deserialize(metadata: Dict, path: str) -> bool:
             return KerasModelBackend.support_path(path)
 
         @staticmethod
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
             return KerasModelBackend.support_path(path)
 
-        def dump(self, obj_to_serialize: "Model", path: str) -> dict:
+        def dump(self, obj_to_serialize: "Model", path: str) -> Dict:
             from tensorflow.keras.models import (
                 save_model,
             )  # pylint: disable=import-outside-toplevel
@@ -60,7 +61,7 @@ try:
                 save_model(obj_to_serialize, tmpdirname, **self._dump_kwargs)
                 create_tar(tmpdirname, path, get_extension(path))
 
-        def load(self, metadata: dict, path: str) -> object:
+        def load(self, metadata: Dict, path: str) -> object:
             from tensorflow.keras.models import (
                 load_model,
             )  # pylint: disable=import-outside-toplevel

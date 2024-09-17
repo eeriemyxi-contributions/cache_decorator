@@ -1,4 +1,7 @@
-from typing import Set
+"""This module contains the Backend class which is a wrapper for all the
+backends that can serialize and deserialize data."""
+
+from typing import Set, Dict
 
 from .txt_backend import TxtBackend
 
@@ -18,6 +21,9 @@ from .exceptions import SerializationException, DeserializationException
 
 
 class Backend:
+    """This class is a wrapper for all the backends that can serialize and
+    deserialize data."""
+
     def __init__(self, load_kwargs, dump_kwargs):
         self.backends = [
             backend(load_kwargs, dump_kwargs)
@@ -45,7 +51,7 @@ class Backend:
             ext for backend in self.backends for ext in backend.SUPPORTED_EXTENSIONS
         }
 
-    def dump(self, obj_to_serialize: object, path: str) -> dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:
         """Serialize and save the object at the given path.
         If this backend needs extra informations to de-serialize data, it can
         return them as a dictionary which will be serialized as a json."
@@ -65,7 +71,7 @@ class Backend:
             obj_to_serialize,
         )
 
-    def load(self, metadata: dict, path: str) -> object:
+    def load(self, metadata: Dict, path: str) -> object:
         """Load the method at the given path. If the medod need extra
         informations it can"""
         for backend in self.backends:

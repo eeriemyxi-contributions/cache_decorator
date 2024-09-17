@@ -1,5 +1,8 @@
-from .backend_template import BackendTemplate
+"""Pandas CSV backend for the cache_decorator module."""
+
 import warnings
+from typing import Dict
+from .backend_template import BackendTemplate
 
 try:
     import pandas as pd
@@ -75,7 +78,7 @@ try:
             )
 
         @staticmethod
-        def can_deserialize(metadata: dict, path: str) -> bool:
+        def can_deserialize(metadata: Dict, path: str) -> bool:
             return (
                 PandasCsvBackend.support_path(path)
                 and metadata.get("type", None) == "pandas"
@@ -87,7 +90,7 @@ try:
                 obj_to_serialize, pd.DataFrame
             )
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
+        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:
 
             if not is_consistent(obj_to_serialize.index):
                 warnings.warn("The index" + common_message)
@@ -115,7 +118,7 @@ try:
                 ],
             }
 
-        def load(self, metadata: dict, path: str) -> object:
+        def load(self, metadata: Dict, path: str) -> object:
             df: pd.DataFrame = pd.read_csv(
                 path,
                 sep=self.SUPPORTED_EXTENSIONS[

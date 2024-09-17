@@ -1,4 +1,5 @@
 """This module contains the Cache class that is used to cache the results of a function."""
+
 import os
 import sys
 import json
@@ -12,6 +13,7 @@ from functools import wraps
 from datetime import datetime
 from typing import Tuple, Callable, Union, Dict, List, Optional
 import humanize
+
 # Dictionary are not hashable and the python hash is not consistent
 # between runs so we have to use an external dictionary hashing package
 # else we will not be able to load the saved caches.
@@ -62,8 +64,8 @@ class Cache:
         backup_path: Optional[str] = None,
         backup: bool = True,
         optional_path_keys: Optional[List[str]] = None,
-        dump_kwargs: dict = {},
-        load_kwargs: dict = {},
+        dump_kwargs: Optional[Dict] = None,
+        load_kwargs: Optional[Dict] = None,
         enable_cache_arg_name: Optional[str] = None,
         capture_enable_cache_arg_name: bool = True,
     ):
@@ -197,6 +199,15 @@ class Cache:
         self.backup_path = backup_path
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
 
+        self.logger: Optional[logging.Logger] = None
+        self.function_info: Optional[Dict] = None
+        self.decorated_function: Optional[Callable] = None
+
+        if load_kwargs is None:
+            load_kwargs = {}
+        if dump_kwargs is None:
+            dump_kwargs = {}
+
         self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
         self.enable_cache_arg_name = enable_cache_arg_name
         self.capture_enable_cache_arg_name = capture_enable_cache_arg_name
@@ -204,14 +215,14 @@ class Cache:
         self.optional_path_keys = optional_path_keys
 
         if self.optional_path_keys is None:
-            self.optional_path_keys = list()
+            self.optional_path_keys = []
         else:
             if not isinstance(self.cache_path, dict):
                 raise ValueError(
                     (
-                        "The argument `optional_path_keys` with value '{}' has no "
-                        "meaning if the `cache_path` isn't a dict. `cache_path`='{}'"
-                    ).format(self.optional_path_keys, self.cache_path)
+                        f"The argument `optional_path_keys` with value '{self.optional_path_keys}' has no "
+                        f"meaning if the `cache_path` isn't a dict. `cache_path`='{self.cache_path}'"
+                    )
                 )
 
         self._check_path_sanity(cache_path)
@@ -227,15 +238,15 @@ class Cache:
             if not test_bk.support_path(path):
                 raise ValueError(
                     (
-                        "There is not backend that can support the path '{}'. "
-                        "The available extensions are '{}'."
-                    ).format(path, test_bk.get_supported_extensions())
+                        f"There is not backend that can support the path '{path}'. "
+                        f"The available extensions are '{test_bk.get_supported_extensions()}'."
+                    )
                 )
         elif isinstance(path, list) or isinstance(path, tuple):
             for sub_path in path:
                 self._check_path_sanity(sub_path)
         elif isinstance(path, dict):
-            for arg, sub_path in path.items():
+            for _arg, sub_path in path.items():
                 self._check_path_sanity(sub_path)
 
             missing_keys = set(self.optional_path_keys) - set(path.keys())
@@ -243,15 +254,15 @@ class Cache:
                 raise ValueError(
                     (
                         "The `cache_path` dictionary is missing some keys defined in "
-                        "the `optional_path_keys` arg. Specifically: {}"
-                    ).format(missing_keys)
+                        f"the `optional_path_keys` arg. Specifically: {missing_keys}"
+                    )
                 )
         else:
             raise ValueError(
                 (
-                    "Sorry, the path '{}' is not in one of the supported formats."
+                    f"Sorry, the path '{path}' is not in one of the supported formats."
                     "We support a string, a list, tuple, or dict of paths."
-                ).format(path)
+                )
             )
 
     @staticmethod
@@ -305,7 +316,7 @@ class Cache:
             args, kwargs, function_info=instance._compute_function_info(function)
         )
 
-    def _compute_function_info(self, function: Callable):
+    def _compute_function_info(self, function: Callable) -> Dict:
         function_args_specs = inspect.getfullargspec(function)
 
         function_info = {
@@ -446,12 +457,12 @@ class Cache:
         if isinstance(path, list) or isinstance(path, tuple):
             result = []
             for p in path:
-                cache = self._load(p)
+                loaded_cache = self._load(p)
 
-                if cache is None:
+                if loaded_cache is None:
                     return None
 
-                result.append(cache)
+                result.append(loaded_cache)
 
             if isinstance(path, tuple):
                 result = tuple(result)
@@ -460,10 +471,10 @@ class Cache:
         elif isinstance(path, dict):
             result = {}
             for key, p in path.items():
-                cache = self._load(p)
+                loaded_cache = self._load(p)
 
                 # if we couldn't load the cache
-                if cache is None:
+                if loaded_cache is None:
                     # and it's optional it's fine, go on loading the other ones
                     if key in self.optional_path_keys:
                         continue
@@ -472,7 +483,7 @@ class Cache:
                     else:
                         return None
 
-                result[key] = cache
+                result[key] = loaded_cache
             return result
 
         # Check if the cache exists and is readable
@@ -487,7 +498,7 @@ class Cache:
         # Load the metadata if present
         if os.path.isfile(metadata_path):
             self.logger.info("Loading the metadata file at '%s'", metadata_path)
-            with open(metadata_path, "r") as f:
+            with open(metadata_path, "r", encoding="utf8") as f:
                 metadata = json.load(f)
         else:
             self.logger.info("The metadata file at '%s' do not exists.", metadata_path)
@@ -521,19 +532,19 @@ class Cache:
             if len(missing_keys) != 0:
                 raise ValueError(
                     (
-                        "The result of the cached function has keys '{}' that does "
-                        "not match with the required ones '{}'"
-                    ).format(result.keys(), required_keys)
+                        f"The result of the cached function has keys '{result.keys()}' that does "
+                        f"not match with the required ones '{required_keys}'"
+                    )
                 )
 
             extra_keys = set(result.keys()) - set(path.keys())
             if len(extra_keys) != 0:
                 raise ValueError(
                     (
-                        "The result of the cached function has keys '{}' that does "
+                        f"The result of the cached function has keys '{result.keys()}' that does "
                         "not appear in the defined path. In particular the the "
-                        "extra keys are '{}'"
-                    ).format(result.keys(), extra_keys)
+                        f"extra keys are '{extra_keys}'"
+                    )
                 )
             return
 
@@ -610,7 +621,7 @@ class Cache:
 
         metadata_path = self._get_metadata_path(path)
         self.logger.info("Saving the cache meta-data at %s", metadata_path)
-        with open(metadata_path, "w") as f:
+        with open(metadata_path, "w", encoding="utf8") as f:
             json.dump(metadata, f, indent=4)
 
     def _decorate_function(self, function: Callable) -> Callable:
@@ -679,8 +690,9 @@ class Cache:
             # Check that the self is actually hashable
             if not issubclass(self, Hashable):
                 raise ValueError(
-                    "Could not has self of class `{}` because it doesn't implement Hashable (from dict_hash).".format(
-                        self.__class__.__name__
+                    (
+                        f"Could not has self of class `{self.__class__.__name__}` "
+                        "because it doesn't implement Hashable (from dict_hash)."
                     )
                 )
 
@@ -820,6 +832,7 @@ class Cache:
         return wrapped
 
     def decorate(self, function: Callable) -> Callable:
+        """Decorate the function with the cache."""
         self.function_info = self._compute_function_info(function)
         self.decorated_function = function
 
@@ -842,8 +855,9 @@ class Cache:
 
         if self.log_level.lower() not in log_levels:
             raise ValueError(
-                "The logger level {} is not a supported one. The available ones are {}".format(
-                    self.log_level.lower(), list(log_levels.keys())
+                (
+                    f"The logger level {self.log_level.lower()} is not a supported one. "
+                    f"The available ones are {list(log_levels.keys())}"
                 )
             )
         self.logger.setLevel(log_levels[self.log_level.lower()])

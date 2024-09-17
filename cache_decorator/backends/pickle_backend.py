@@ -1,13 +1,14 @@
-import pickle
+"""Backend for compressing and pickling objects."""
+
+from typing import Dict
 from pickle import dump as pickle_dump, load as pickle_load
 from .backend_template import BackendTemplate
 
 
 class PickleBackend(BackendTemplate):
-    SUPPORTED_EXTENSIONS = [".pkl"]
+    """Backend for compressing and pickling objects."""
 
-    def __init__(self, load_kwargs, dump_kwargs):
-        super(PickleBackend, self).__init__(load_kwargs, dump_kwargs)
+    SUPPORTED_EXTENSIONS = [".pkl"]
 
     @staticmethod
     def support_path(path: str) -> bool:
@@ -20,13 +21,13 @@ class PickleBackend(BackendTemplate):
         return PickleBackend.support_path(path)
 
     @staticmethod
-    def can_deserialize(metadata: dict, path: str) -> bool:
+    def can_deserialize(metadata: Dict, path: str) -> bool:
         return PickleBackend.support_path(path)
 
-    def dump(self, obj_to_serialize: object, path: str) -> dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:
         with open(path, "wb") as f:
             pickle_dump(obj_to_serialize, f, **self._dump_kwargs)
 
-    def load(self, metadata: dict, path: str) -> object:
+    def load(self, metadata: Dict, path: str) -> object:
         with open(path, "rb") as f:
             return pickle_load(f, **self._load_kwargs)
