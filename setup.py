@@ -37,6 +37,7 @@ test_deps = [
     "numpy",
     "pandas",
     "tensorflow",
+    "lxml",
     "validate_version_code",
     "codacy-coverage",
     "pytest_readme",
