@@ -1,3 +1,4 @@
+"""Setup for the cache_decorator package."""
 import os
 import re
 
@@ -9,7 +10,7 @@ from setuptools import find_packages, setup
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the relevant file
-with copen(os.path.join(here, "README.rst"), encoding="utf-8") as f:
+with copen(os.path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -42,6 +43,7 @@ setup(
     version=__version__,
     description="a simple decorator to cache the results of computationally heavy functions",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url="https://github.com/zommiommy/cache_decorator",
     author="Tommaso Fontana",
     author_email="tommaso.fontana.96@gmail.com",
@@ -57,7 +59,7 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "dict_hash >= 1.3.0",  # This is used to get a consistent hash of the arguments
+        "dict_hash >= 1.3.2",  # This is used to get a consistent hash of the arguments
         "humanize >= 3.4.1",  # This is used for the metadata to be readable
         # The following packages have no dependancies so it should be safe to add
         "compress_pickle >= 2.0.1",  # For compressed pickles

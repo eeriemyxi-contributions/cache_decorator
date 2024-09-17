@@ -1,25 +1,26 @@
-cache_decorator
-=========================================================================================
-|pip| |downloads|
+# Cache Decorator
+
+[![Pypi project](https://badge.fury.io/py/cache-decorator.svg)](https://badge.fury.io/py/cache-decorator)
+[![Pypi total project downloads](https://pepy.tech/badge/cache_decorator)](https://pepy.tech/project/cache_decorator)
 
 A simple decorator to cache the results of computationally heavy functions.
 The package automatically serialize and deserialize depending on the format of the save path.
 
-By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz .pkl.bz .pkl.lzma .pkl.zip`` 
+By default it supports `.json .json.gz .json.bz .json.lzma` and `.pkl .pkl.gz .pkl.bz .pkl.lzma .pkl.zip`
 but other extensions can be used if the following packages are installed:
 
-numpy: ``.npy .npz``
+numpy: `.npy .npz`
 
-pandas: ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
+pandas: `.csv .csv.gz .csv.bz2 .csv.zip .csv.xz`
 
 Also there is an optimized format for numerical dataframes:
 
-pandas: ``.embedding .embedding.gz .embedding.bz2 .embedding.xz``
+pandas: `.embedding .embedding.gz .embedding.bz2 .embedding.xz`
 
-This creates an optionally compressed tar archive with pickles of the index and 
-columns and a ``.npy`` of the values.
+This creates an optionally compressed tar archive with pickles of the index and
+columns and a `.npy` of the values.
 
-.. code:: python
+```python
 
     import time
     import numpy as np
@@ -46,21 +47,21 @@ columns and a ``.npy`` of the values.
             ),
         }
 
+```
 
-How do I install this package?
-----------------------------------------------
+## How do I install this package?
+
 As usual, just download it using pip:
 
-.. code:: shell
-
+```bash
     pip install cache_decorator
+```
 
+## Examples of Usage
 
-Examples of Usage
-----------------------------------------------
 To cache a function or a method you just have to decorate it with the cache decorator.
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -115,13 +116,14 @@ To cache a function or a method you just have to decorate it with the cache deco
         def consistent_hash(self) -> str:
             return str(self.x)
 
-Cache path
-----------
+```
+
+## Cache path
+
 The default cache directory is ./cache but this can be setted by passing the cache_dir parameter to the decorator or by setting the environment variable CACHE_DIR.
 In the case both are setted, the parameter folder has precedence over the environment one.
 
-
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -131,12 +133,14 @@ In the case both are setted, the parameter folder has precedence over the enviro
         sleep(3)
         return a
 
+```
+
 The path format can be modified by passing the cache_path parameter.
 This string will be formatted with infos about the function, its parameters and, if it's a method, the self attributes.
 
 De default path is:
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -146,9 +150,11 @@ De default path is:
         sleep(3)
         return a
 
+```
+
 But can be modified giving cache a more significative name, for example we can add the value of a into the file name.
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -158,9 +164,11 @@ But can be modified giving cache a more significative name, for example we can a
         sleep(3)
         return a
 
+```
+
 Depending on the extension of the file, different serialization and deserialization dispatcher will be called.
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -185,13 +193,14 @@ Depending on the extension of the file, different serialization and deserializat
         sleep(3)
         return np.array([1, 2, 3]), np.array([1, 2, 4])
 
-Ignoring arguments when computing the hash
-------------------------------------------
+```
+
+## Ignoring arguments when computing the hash
+
 By default the cache is differentiate by the parameters passed to the function.
 One can specify which parameters should be ignored.
 
-
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -203,9 +212,11 @@ One can specify which parameters should be ignored.
             print("HEY")
         return a
 
+```
+
 Multiple arguments can be specified as a list of strings with the name of the arguments to ignore.
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -217,12 +228,14 @@ Multiple arguments can be specified as a list of strings with the name of the ar
             print("HEY")
         return a
 
-Dynamically enabling the cache
-------------------------------
-Sometime we need to enable or disable the cache dinamically, we soupport this 
+```
+
+## Dynamically enabling the cache
+
+Sometime we need to enable or disable the cache dinamically, we soupport this
 using the `enable_cache_arg_name` argument which can be used as follows:
 
-.. code:: python
+```python
 
     import time
     import numpy as np
@@ -310,14 +323,16 @@ using the `enable_cache_arg_name` argument which can be used as follows:
 
     instance = TestEnableCacheArgAsAttributeStatic(enable_cache=True)
     instance.cached_method(1)
-    
+
+```
+
 for more examples of usage check the tests: `test/test_method.py` and `test/test_enable_cache_arg_name.py`.
 
-Cache validity
-------------------------------------------
-Cache also might have a validity duration. 
+## Cache validity
 
-.. code:: python
+Cache also might have a validity duration.
+
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -330,17 +345,18 @@ Cache also might have a validity duration.
         sleep(3)
         return a
 
+```
+
 In this example the cache will be valid for the next 24 days. and on the 25th day the cache will be rebuilt.
 The duration can be written as a time in seconds or as a string with unit.
 The units can be "s" seconds, "m" minutes, "h" hours, "d" days, "w" weeks.
 
-Logging
--------
+## Logging
+
 Each time a new function is decorated with this decorator, a new logger is created.
-You can modify the default logger with ``log_level`` and ``log_format``.
+You can modify the default logger with `log_level` and `log_format`.
 
-
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -350,9 +366,11 @@ You can modify the default logger with ``log_level`` and ``log_format``.
         sleep(3)
         return a
 
+```
+
 If the default format is not like you like it you can change it with:
 
-.. code:: python
+```python
 
     from time import sleep
     from cache_decorator import Cache
@@ -362,17 +380,21 @@ If the default format is not like you like it you can change it with:
         sleep(3)
         return a
 
-More informations about the formatting can be found here https://docs.python.org/3/library/logging.html .
+```
+
+More informations about the formatting [can be found here](https://docs.python.org/3/library/logging.html).
 
 Moreover, the name of the default logger is:
 
-.. code:: python
+```python
 
     logging.getLogger("cache." + function.__name__)
 
+```
+
 So we can get the reference to the logger and fully customize it:
 
-.. code:: python
+```python
 
     import logging
     from cache_decorator import Cache
@@ -389,18 +411,20 @@ So we can get the reference to the logger and fully customize it:
     handler = logging.FileHandler("cache.log")
     logger.addHandler(handler)
 
-Error Handling
---------------
+```
+
+## Error Handling
+
 A common problem we noted using the library is that if the saved type is not compatible with the chosen extension,
 the program will raise an exception at the end of the function and we lose all the work done.
 To mitigate this proble, now the cache decorator has a built-in system for handling errors.
 If there is an error in the serializzation of the result, the program will make an automatic backup using pickle.
-This by default will add ``_backup.pkl`` to the end of the original path, but if for any reason this would over-write a file, a random string will be appended.
-And log (with critical level) the path of the backup file and the supposed path where the 
+This by default will add `_backup.pkl` to the end of the original path, but if for any reason this would over-write a file, a random string will be appended.
+And log (with critical level) the path of the backup file and the supposed path where the file was going to be saved.
 
 Suppose we erroneusly set the extension to CSV instead of JSON:
 
-.. code:: python
+```python
 
     from cache_decorator import Cache
 
@@ -414,10 +438,11 @@ Suppose we erroneusly set the extension to CSV instead of JSON:
     # The file was gonna be written at:
     # ./test_10.csv
 
+```
 
 Now we can manually load the value and store it at the correct path, this way the next time the function is called, the cache will be loaded correctly with the right extension.
 
-.. code:: python
+```python
 
     import json
     import pickle
@@ -430,7 +455,9 @@ Now we can manually load the value and store it at the correct path, this way th
     with open("./test_10.json", "w") as f:
         json.dump(f, result) 
 
-.. code:: python
+```
+
+```python
 
     from cache_decorator import Cache
 
@@ -440,10 +467,11 @@ Now we can manually load the value and store it at the correct path, this way th
 
     test_function(10) # Load the corrected Cache at "./test_10.json"
 
+```
 
 Optionally, one can programmatically sort this out by catching the exception and accessing its fields.
 
-.. code:: python
+```python
 
     from cache_decorator import Cache
 
@@ -457,11 +485,12 @@ Optionally, one can programmatically sort this out by catching the exception and
         result = e.result
         backup_path = e.backup_path
         path = e.path
-        
 
-Moreover, the backup path can be costumized using the ``backup_path`` parameter, here you can use the same parameter of ``path`` and also ``{_date}``, which is the date of the bakcup, and ``{_rnd}`` which guarantees that the file will not overwrite any other file:
+```
 
-.. code:: python
+Moreover, the backup path can be costumized using the `backup_path` parameter, here you can use the same parameter of `path` and also `{_date}`, which is the date of the bakcup, and `{_rnd}` which guarantees that the file will not overwrite any other file:
+
+```python
 
     from cache_decorator import Cache
 
@@ -476,13 +505,13 @@ Moreover, the backup path can be costumized using the ``backup_path`` parameter,
     # The file was gonna be written at:
     # ./test.csv
 
-        
+```  
 
-Internals
---------------
+## Internals
+
 If for any reason you need to get a reference to the wrapped function and its cacher class, you can access them using the internal variables:
 
-.. code:: python
+```python
 
     from cache_decorator import Cache
 
@@ -493,15 +522,16 @@ If for any reason you need to get a reference to the wrapped function and its ca
     original_test_function = test_function.__cached_function
     test_function_cacher_class = test_function.__cacher_instance
 
+```
+
 We do not suggest to use them.
 
+## Manual Caching
 
-Manual Caching
---------------
-If for some reason you need to manually manage your cache, you can use the built in static methods of the ``Cache`` class.
+If for some reason you need to manually manage your cache, you can use the built in static methods of the `Cache` class.
 It will automatically create the needed folders. Moreover, you can get the expected path for a function call.
 
-.. code:: python
+```python
 
     from cache_decorator import Cache
     
@@ -526,21 +556,21 @@ It will automatically create the needed folders. Moreover, you can get the expec
     # you can get the path where the file would be saved (this does not call the function!).
     path = Cache.compute_path(test_function, 10, y="ciao")
 
+```
 
-Security Warnings
------------------
+## Security Warnings
 
 Whenever possible don't use the pickle extension.
-De-serializzation of untrusted data might lead to Remote Code Execution or Local Privilege Escalation ( https://davidhamann.de/2020/04/05/exploiting-python-pickle/ ).
+De-serializzation of untrusted data might lead to [Remote Code Execution or Local Privilege Escalation](https://davidhamann.de/2020/04/05/exploiting-python-pickle/).
 Therefore, simple formats such as json is preferable whenever possible.
 
 Suppose we have this code:
 
-.. code:: python
+```python
 
     from cache_decorator import Cache
 
-    @Cache("./cache/{x}.pkl)
+    @Cache("./cache/{x}.pkl")
     def my_awesome_function(x):
         return x
 
@@ -548,9 +578,11 @@ Suppose we have this code:
 
     my_awesome_function(1)
 
+```
+
 If in any way we have access to the cache folder, we can easily exploit it:
 
-.. code:: python
+```python
 
     import pickle
 
@@ -568,11 +600,13 @@ If in any way we have access to the cache folder, we can easily exploit it:
     with open("./cache/1.pkl", "wb") as f:
         f.write(payload)
 
-Next time that the function is called with argument ``1``, we will spawn a remote shell and take control of the system.
+```
+
+Next time that the function is called with argument `1`, we will spawn a remote shell and take control of the system.
 
 Or, since Pickle is a "programming language" which is executed by a VM, we can write a general RCE exploit which only uses builtins:
 
-.. code:: python
+```python
 
     import pickle
     
@@ -582,10 +616,12 @@ Or, since Pickle is a "programming language" which is executed by a VM, we can w
     
     # Test it
     pickle.load(x)
-    
+
+```
+
 Or you can just call eval and execute arbitrary python code:
 
-.. code:: python
+```python
 
     import pickle
     
@@ -597,19 +633,14 @@ Or you can just call eval and execute arbitrary python code:
         b"tR."
     ]))
 
+```
+
 For this reason is important to either use a simpler serializzation scheme like json and to fortify the system by setting the cache dir to be read-write only for the current user.
 
-.. code:: bash
+```bash
 
     chown -r $USER:$USER ./cache
     chmod -r 600 ./cache
+```
 
 This way only the current application can create and modify the cache files.
-
-.. |pip| image:: https://badge.fury.io/py/cache-decorator.svg
-    :target: https://badge.fury.io/py/cache-decorator
-    :alt: Pypi project
-
-.. |downloads| image:: https://pepy.tech/badge/cache_decorator
-    :target: https://pepy.tech/badge/cache_decorator
-    :alt: Pypi total project downloads

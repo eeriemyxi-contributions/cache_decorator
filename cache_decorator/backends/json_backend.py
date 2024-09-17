@@ -30,10 +30,10 @@ class JsonBackend(BackendTemplate):
         """Serialize and save the object at the given path.
         If this backend needs extra informations to de-serialize data, it can
         return them as a dictionary which will be serialized as a json."""
-        compress_json.dump(obj_to_serialize, path, **self._dump_kwargs)
+        compress_json.dump(obj_to_serialize, path, json_kwargs=self._dump_kwargs)
 
     def load(self, metadata: Dict, path: str) -> object:
         """Load the method at the given path. If the medod need extra
         informations it can read them form the metadata dictionary which is
         the return value of the dump method."""
-        return compress_json.load(path, **self._load_kwargs)
+        return compress_json.load(path, json_kwargs=self._load_kwargs)
