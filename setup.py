@@ -36,7 +36,7 @@ test_deps = [
     "coveralls",
     "validate_version_code",
     "codacy-coverage",
-    "pytest-readme",
+    "pytest_readme",
 ]
 
 setup(
@@ -58,6 +58,7 @@ setup(
     ],
     packages=find_packages(exclude=["contrib", "docs", "tests*"]),
     tests_require=test_deps,
+    extras_require={"test": test_deps},
     # Add here the package dependencies
     install_requires=[
         "dict_hash >= 1.3.2",  # This is used to get a consistent hash of the arguments
