@@ -4,6 +4,7 @@ import os
 from cache_decorator import Cache
 from .utils import standard_test_dataframes
 
+
 @Cache(
     cache_path="{cache_dir}/{_hash}.pkl",
     cache_dir="./test_cache",
@@ -12,7 +13,8 @@ from .utils import standard_test_dataframes
 )
 def cached_function(a):
     sleep(1)
-    return 0xdeadbabe
+    return 0xDEADBABE
+
 
 def test_validity_duration():
 

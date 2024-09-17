@@ -1,5 +1,5 @@
-
 import re
+
 
 def parse_time(value):
     if value is None:
@@ -14,10 +14,12 @@ def parse_time(value):
     value = value.strip()
     if value == "":
         return None
-        
+
     if not re.match(r"\d+[smhdw]", value):
-        raise ValueError("The time delta %s does not match the regex \\d+[smhdw]"%value)
-    
+        raise ValueError(
+            "The time delta %s does not match the regex \\d+[smhdw]" % value
+        )
+
     number = int(value[:-1])
     unit = value[-1]
 

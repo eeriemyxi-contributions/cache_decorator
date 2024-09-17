@@ -1,4 +1,3 @@
-
 from .backend_template import BackendTemplate
 import warnings
 
@@ -26,13 +25,8 @@ try:
         if series.dtype != "object":
             return True
 
-        
-
         expected_type = str(type(series.values[0]))
-        return all(
-            expected_type == str(type(s))
-            for s in series
-        )
+        return all(expected_type == str(type(s)) for s in series)
 
     def get_vector_dtype(series: pd.Series) -> str:
         """Get which type to use to serialize the type of the series"""
@@ -65,7 +59,7 @@ try:
             ".ssv.gz": " ",
             ".ssv.bz2": " ",
             ".ssv.xz": " ",
-            ".ssv.zip": " "
+            ".ssv.zip": " ",
         }
 
         def __init__(self, load_kwargs, dump_kwargs):
@@ -82,11 +76,16 @@ try:
 
         @staticmethod
         def can_deserialize(metadata: dict, path: str) -> bool:
-            return PandasCsvBackend.support_path(path) and metadata.get("type", None) == "pandas"
+            return (
+                PandasCsvBackend.support_path(path)
+                and metadata.get("type", None) == "pandas"
+            )
 
         @staticmethod
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
-            return PandasCsvBackend.support_path(path) and isinstance(obj_to_serialize, pd.DataFrame)
+            return PandasCsvBackend.support_path(path) and isinstance(
+                obj_to_serialize, pd.DataFrame
+            )
 
         def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
 
@@ -96,11 +95,7 @@ try:
             obj_to_serialize.to_csv(
                 path,
                 sep=self.SUPPORTED_EXTENSIONS[
-                    next(
-                        x
-                        for x in self.SUPPORTED_EXTENSIONS
-                        if path.endswith(x)
-                    )
+                    next(x for x in self.SUPPORTED_EXTENSIONS if path.endswith(x))
                 ],
                 **self._dump_kwargs
             )
@@ -112,10 +107,7 @@ try:
                     get_vector_dtype(obj_to_serialize[column])
                     for column in obj_to_serialize.columns
                 ],
-                "columns": [
-                    column
-                    for column in obj_to_serialize.columns
-                ],
+                "columns": [column for column in obj_to_serialize.columns],
                 "index_type": get_vector_dtype(obj_to_serialize.index),
                 "columns_names_type": [
                     str(column.__class__.__name__)
@@ -127,18 +119,16 @@ try:
             df: pd.DataFrame = pd.read_csv(
                 path,
                 sep=self.SUPPORTED_EXTENSIONS[
-                    next(
-                        x
-                        for x in self.SUPPORTED_EXTENSIONS
-                        if path.endswith(x)
-                    )
+                    next(x for x in self.SUPPORTED_EXTENSIONS if path.endswith(x))
                 ],
                 **self._load_kwargs
             )
 
             # Restore the columns to the original dtypes.
             new_columns = []
-            for column, dtype in zip(metadata["columns"], metadata["columns_names_type"]):
+            for column, dtype in zip(
+                metadata["columns"], metadata["columns_names_type"]
+            ):
                 if dtype == "float":
                     column = float(column)
                 if dtype == "str":
@@ -162,11 +152,13 @@ try:
             df.columns = new_columns
 
             # Convert back the types of the columns to the original ones
-            df.astype({
-                column: dtype
-                for column, dtype in zip(df.columns, metadata["columns_types"])
-            })
-            
+            df.astype(
+                {
+                    column: dtype
+                    for column, dtype in zip(df.columns, metadata["columns_types"])
+                }
+            )
+
             # Restore the index to the original dtypes.
             df.index = df.index.astype(metadata["index_type"])
 

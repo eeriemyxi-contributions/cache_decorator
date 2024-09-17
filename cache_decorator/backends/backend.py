@@ -16,6 +16,7 @@ from .keras_model_backend import KerasModelBackend
 
 from .exceptions import SerializationException, DeserializationException
 
+
 class Backend:
     def __init__(self, load_kwargs, dump_kwargs):
         self.backends = [
@@ -34,27 +35,22 @@ class Backend:
             if backend is not None
         ]
 
-    def support_path(self, path:str) -> bool:
+    def support_path(self, path: str) -> bool:
         """If exists at least one backend that can handle the current path."""
-        return any(
-            backend.support_path(path)
-            for backend in self.backends
-        )
+        return any(backend.support_path(path) for backend in self.backends)
 
     def get_supported_extensions(self) -> Set[str]:
         """Get the supported extensions."""
         return {
-            ext
-            for backend in self.backends
-            for ext in backend.SUPPORTED_EXTENSIONS
+            ext for backend in self.backends for ext in backend.SUPPORTED_EXTENSIONS
         }
 
-    def dump(self, obj_to_serialize: object, path:str) -> dict:
+    def dump(self, obj_to_serialize: object, path: str) -> dict:
         """Serialize and save the object at the given path.
-        If this backend needs extra informations to de-serialize data, it can 
+        If this backend needs extra informations to de-serialize data, it can
         return them as a dictionary which will be serialized as a json."
         If the function returns None or does not return, an empty dictionary
-        will be used as metadata."""     
+        will be used as metadata."""
         for backend in self.backends:
             if backend.can_serialize(obj_to_serialize, path):
                 result = backend.dump(obj_to_serialize, path)
@@ -62,18 +58,22 @@ class Backend:
                     result = {}
                 return result
         raise SerializationException(
-            "There is no backend to serialize the given object of type {} at the given path {}".format(type(obj_to_serialize), path),
+            "There is no backend to serialize the given object of type {} at the given path {}".format(
+                type(obj_to_serialize), path
+            ),
             path,
-            obj_to_serialize
-            )
+            obj_to_serialize,
+        )
 
-    def load(self, metadata:dict, path:str) -> object:
+    def load(self, metadata: dict, path: str) -> object:
         """Load the method at the given path. If the medod need extra
-        informations it can """
+        informations it can"""
         for backend in self.backends:
             if backend.can_deserialize(metadata, path):
                 return backend.load(metadata, path)
         raise DeserializationException(
-            "There is no backend to deserialize the given object at the given path {}".format(path),
-            path
-            )
+            "There is no backend to deserialize the given object at the given path {}".format(
+                path
+            ),
+            path,
+        )

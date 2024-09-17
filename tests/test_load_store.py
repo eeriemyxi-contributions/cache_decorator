@@ -7,11 +7,10 @@ from cache_decorator import Cache
 from .utils import standard_test_dataframes
 
 
-
 def test_load_store():
     test_obj = {
-        "c":"aaaaa",
-        "f":2123123,
+        "c": "aaaaa",
+        "f": 2123123,
     }
     Cache.store(test_obj, "./test_cache/test_load_store.json")
 

@@ -8,7 +8,6 @@ class SerializationException(Exception):
         super(SerializationException, self).__init__(error_message)
 
 
-    
 class DeserializationException(Exception):
     def __init__(self, error_message, path, backup_path=None):
 

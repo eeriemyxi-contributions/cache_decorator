@@ -7,5 +7,5 @@ __all__ = [
     "standard_test",
     "standard_test_array",
     "standard_test_arrays",
-    "standard_test_dataframes"
+    "standard_test_dataframes",
 ]

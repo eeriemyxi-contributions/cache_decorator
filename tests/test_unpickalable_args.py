@@ -5,6 +5,7 @@ from cache_decorator import Cache
 from .utils import standard_test_array
 import multiprocessing as mp
 
+
 @Cache(
     cache_path="./test_cache/arbatack.pkl",
     backup=False,
@@ -12,6 +13,7 @@ import multiprocessing as mp
 def cached_function(a):
     sleep(2)
     return [1, 2, 3]
+
 
 def test_unpickalable():
     for obj in [

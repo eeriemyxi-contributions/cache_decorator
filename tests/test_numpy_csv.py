@@ -6,6 +6,7 @@ from shutil import rmtree
 from cache_decorator import Cache
 from .utils import standard_test_arrays
 
+
 @Cache(
     cache_path="{cache_dir}/{_hash}.csv.xz",
     cache_dir="./test_cache",
@@ -14,6 +15,7 @@ from .utils import standard_test_arrays
 def cached_function(a):
     sleep(2)
     return np.zeros((10, 10))
+
 
 def test_numpy_csv():
     if os.path.exists("./test_cache"):

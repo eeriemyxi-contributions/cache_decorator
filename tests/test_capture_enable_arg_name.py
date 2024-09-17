@@ -5,6 +5,7 @@ import os
 from cache_decorator import Cache
 from .utils import standard_test_array
 
+
 @Cache(
     cache_dir="./test_cache",
     backup=False,
@@ -21,6 +22,7 @@ def test_with_capture():
     cached_function_with_capture(1, enable_cache=False)
     if os.path.exists("./test_cache"):
         rmtree("./test_cache")
+
 
 @Cache(
     cache_dir="./test_cache",

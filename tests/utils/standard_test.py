@@ -1,7 +1,8 @@
 import numpy as np
 from time import perf_counter
 
-def standard_test(cached_function, args=((1,),(1,),(2,)), kwargs=({},{},{})):
+
+def standard_test(cached_function, args=((1,), (1,), (2,)), kwargs=({}, {}, {})):
     # not cached iteration
     start = perf_counter()
     result_1 = cached_function(*args[0], **kwargs[0])

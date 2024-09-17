@@ -5,11 +5,13 @@ from .utils import standard_test_array
 import numpy as np
 from time import perf_counter
 
+
 def timeit(func, *args, **kwargs):
     start = perf_counter()
     func(*args, **kwargs)
     return perf_counter() - start
-    
+
+
 @Cache(
     cache_dir="./test_cache",
     enable_cache_arg_name="enable_cache",
@@ -18,9 +20,11 @@ def cached_function(a):
     sleep(2)
     return [1, 2, 3]
 
+
 class NonHashable:
     def __hash__(self) -> int:
         raise ValueError("THIS CLASS IS NOT HASHABLE")
+
 
 def test_enable_cache_arg_name():
     # both computed
@@ -38,7 +42,7 @@ def test_enable_cache_arg_name():
 
     # using cache by default
     assert abs(it1 - it2) > 0.5
-    # both computed (it0 == it1) 
+    # both computed (it0 == it1)
     assert abs(it0 - it2) > 0.5
     # using cache by enabling with args
     assert abs(it1 - it3) > 0.5
@@ -46,6 +50,7 @@ def test_enable_cache_arg_name():
     assert abs(it4 - it2) > 0.5
 
     rmtree("./test_cache")
+
 
 @Cache(
     cache_path="{cache_dir}/{b}.pkl",
@@ -56,6 +61,7 @@ def cached_function_with_obj(obj, b):
     sleep(2)
     return [1, 2, 3]
 
+
 def test_enable_cache_arg_nam_with_obj():
     class Obj:
         def __init__(self, enable_cache):
@@ -64,7 +70,7 @@ def test_enable_cache_arg_nam_with_obj():
         @property
         def is_cache_enabled(self):
             return self.enable_cache
-        
+
     obj = Obj(True)
     # both computed
     it0 = timeit(cached_function_with_obj, obj, 0)
@@ -80,17 +86,18 @@ def test_enable_cache_arg_nam_with_obj():
 
     # using cache by default
     assert abs(it1 - it2) > 0.5
-    # both computed (it0 == it1) 
+    # both computed (it0 == it1)
     assert abs(it0 - it2) > 0.5
     # disabling cache
     assert abs(it4 - it2) > 0.5
 
     rmtree("./test_cache")
 
+
 class TestEnableCacheArgAsAttribute:
     def __init__(self, enable_cache: bool):
         self.enable_cache = enable_cache
-    
+
     @Cache(
         cache_path="{cache_dir}/{a}.pkl",
         cache_dir="./test_cache",
@@ -99,6 +106,7 @@ class TestEnableCacheArgAsAttribute:
     def cached_method(self, a):
         sleep(2)
         return [1, 2, 3]
+
 
 def test_enable_cache_arg_name_attribute():
     instance = TestEnableCacheArgAsAttribute(True)
@@ -116,7 +124,7 @@ def test_enable_cache_arg_name_attribute():
 
     # using cache by default
     assert abs(it1 - it2) > 0.5
-    # both computed (it0 == it1) 
+    # both computed (it0 == it1)
     assert abs(it0 - it2) > 0.5
     # disabling cache
     assert abs(it4 - it2) > 0.5
@@ -127,7 +135,7 @@ def test_enable_cache_arg_name_attribute():
 class TestEnableCacheArgAsAttributeProperty:
     def __init__(self, enable_cache: bool):
         self.enable_cache = enable_cache
-    
+
     @property
     def is_cache_enabled(self):
         return self.enable_cache
@@ -140,6 +148,7 @@ class TestEnableCacheArgAsAttributeProperty:
     def cached_method(self, a):
         sleep(2)
         return [1, 2, 3]
+
 
 def test_enable_cache_arg_name_property():
     instance = TestEnableCacheArgAsAttributeProperty(True)
@@ -157,7 +166,7 @@ def test_enable_cache_arg_name_property():
 
     # using cache by default
     assert abs(it1 - it2) > 0.5
-    # both computed (it0 == it1) 
+    # both computed (it0 == it1)
     assert abs(it0 - it2) > 0.5
     # disabling cache
     assert abs(it4 - it2) > 0.5

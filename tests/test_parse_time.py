@@ -1,6 +1,6 @@
-
 import pytest
 from cache_decorator.utils import parse_time
+
 
 def test_parse_time():
     assert parse_time(0) == 0
@@ -17,7 +17,7 @@ def test_parse_time():
     assert parse_time("5d") == 432000
     assert parse_time("1w") == 604800
     assert parse_time("5w") == 3024000
-    
+
     assert parse_time("432714136471623749619s") == 432714136471623749619
 
     with pytest.raises(ValueError):

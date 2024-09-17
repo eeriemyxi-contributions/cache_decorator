@@ -1,4 +1,3 @@
-
 from .backend_template import BackendTemplate
 from .pandas_csv_backend import PandasCsvBackend
 
@@ -14,17 +13,17 @@ try:
             a list of arrays
             or a dictionary of arrays
         """
-        SUPPORTED_EXTENSIONS = [
-            ".npy", ".npz"
-        ] + ([] if PandasCsvBackend is None else list(PandasCsvBackend.SUPPORTED_EXTENSIONS.keys()))
+
+        SUPPORTED_EXTENSIONS = [".npy", ".npz"] + (
+            []
+            if PandasCsvBackend is None
+            else list(PandasCsvBackend.SUPPORTED_EXTENSIONS.keys())
+        )
 
         def __init__(self, load_kwargs, dump_kwargs):
             # This is needed if we want to be able to save lists or dict of nparrays
             if PandasCsvBackend is not None:
-                self._pandas_backend = PandasCsvBackend(
-                    load_kwargs,
-                    dump_kwargs
-                )
+                self._pandas_backend = PandasCsvBackend(load_kwargs, dump_kwargs)
             load_kwargs = load_kwargs.copy()
             load_kwargs.setdefault("allow_pickle", True)
             super(NumpyBackend, self).__init__(load_kwargs, dump_kwargs)
@@ -40,30 +39,33 @@ try:
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
             return NumpyBackend.support_path(path) and (
                 isinstance(obj_to_serialize, np.ndarray)
-                or isinstance(obj_to_serialize, dict) and all(
-                    isinstance(e, np.ndarray)
-                    for e in obj_to_serialize.values()
-                )
-                or isinstance(obj_to_serialize, (list, tuple)) and all(
-                    isinstance(e, np.ndarray)
-                    for e in obj_to_serialize
-                )
+                or isinstance(obj_to_serialize, dict)
+                and all(isinstance(e, np.ndarray) for e in obj_to_serialize.values())
+                or isinstance(obj_to_serialize, (list, tuple))
+                and all(isinstance(e, np.ndarray) for e in obj_to_serialize)
             )
 
         @staticmethod
         def can_deserialize(metadata: dict, path: str) -> bool:
-            pandas_test = PandasCsvBackend is not None and PandasCsvBackend.can_deserialize(
-                metadata,
-                path
+            pandas_test = (
+                PandasCsvBackend is not None
+                and PandasCsvBackend.can_deserialize(metadata, path)
             )
-            return NumpyBackend.support_path(path) and not pandas_test or pandas_test and metadata["type"] == "numpy"
+            return (
+                NumpyBackend.support_path(path)
+                and not pandas_test
+                or pandas_test
+                and metadata["type"] == "numpy"
+            )
 
         def dump(self, obj_to_serialize: object, path: str) -> dict:
-            if self._pandas_backend is not None and self._pandas_backend.support_path(path):
+            if self._pandas_backend is not None and self._pandas_backend.support_path(
+                path
+            ):
                 import pandas as pd
+
                 metadata = self._pandas_backend.dump(
-                    pd.DataFrame(obj_to_serialize),
-                    path
+                    pd.DataFrame(obj_to_serialize), path
                 )
                 metadata["type"] = "numpy"
                 return metadata
@@ -80,12 +82,12 @@ try:
             return {"type": str(type(obj_to_serialize))}
 
         def load(self, metadata: dict, path: str) -> object:
-            if self._pandas_backend is not None and self._pandas_backend.support_path(path):
+            if self._pandas_backend is not None and self._pandas_backend.support_path(
+                path
+            ):
                 import pandas as pd
-                return self._pandas_backend.load(
-                    metadata,
-                    path
-                ).values
+
+                return self._pandas_backend.load(metadata, path).values
             if path.endswith(".npy"):
                 with open(path, "rb") as f:
                     return np.load(f)

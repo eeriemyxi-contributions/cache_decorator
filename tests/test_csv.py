@@ -15,8 +15,9 @@ from .utils import standard_test_dataframes
 )
 def cached_function(a):
     sleep(2)
-    df = pd.DataFrame([[1, 1.0, "a"], [2, 2.0, "b"], [
-                      3, 3.0, "c"]], columns=list('ABC'))
+    df = pd.DataFrame(
+        [[1, 1.0, "a"], [2, 2.0, "b"], [3, 3.0, "c"]], columns=list("ABC")
+    )
     df.index = df.index.astype("str")
     return df
 

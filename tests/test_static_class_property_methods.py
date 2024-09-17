@@ -47,6 +47,7 @@ def test_CallClassMethodUpper():
 
 ################################################################################
 
+
 class CallStaticMethodDown:
     @staticmethod
     @Cache(
@@ -58,11 +59,13 @@ class CallStaticMethodDown:
         sleep(2)
         return [1, 2, 3]
 
+
 def test_CallStaticMethodDown():
     a = CallStaticMethodDown()
     standard_test_array(a.cached_function)
     if os.path.exists("./test_cache"):
         rmtree("./test_cache")
+
 
 class CallClassMethodDown:
     X = 1
@@ -76,6 +79,7 @@ class CallClassMethodDown:
     def cached_function(cls, a):
         sleep(2)
         return [1, 2, 3]
+
 
 def test_CallClassMethodDown():
     a = CallClassMethodDown()
