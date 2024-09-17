@@ -61,7 +61,7 @@ setup(
 
         # The following packages have no dependancies so it should be safe to add
         "compress_pickle >= 2.0.1",      # For compressed pickles
-        "compress_json>=1.0.4",        # For compressed json
+        "compress_json>=1.1.0",        # For compressed json
         "deflate_dict",         # To save arguments to the json
     ],
 )
