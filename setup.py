@@ -36,6 +36,7 @@ test_deps = [
     "coveralls",
     "numpy",
     "pandas",
+    "tensorflow",
     "validate_version_code",
     "codacy-coverage",
     "pytest_readme",
