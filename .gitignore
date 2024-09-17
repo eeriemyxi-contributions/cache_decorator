@@ -117,3 +117,4 @@ var/
 # IPython
 # mkdocs documentation
 # Distribution / packaging
+test_readme.py

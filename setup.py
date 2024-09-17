@@ -34,6 +34,7 @@ test_deps = [
     "coveralls",
     "validate_version_code",
     "codacy-coverage",
+    "pytest-readme"
 ]
 
 setup(
