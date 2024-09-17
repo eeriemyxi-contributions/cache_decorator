@@ -1,4 +1,5 @@
 """Examples of using the cache_decorator module."""
+
 from typing import Any
 import logging
 from time import sleep

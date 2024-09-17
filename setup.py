@@ -1,4 +1,5 @@
 """Setup for the cache_decorator package."""
+
 import os
 import re
 
@@ -35,7 +36,7 @@ test_deps = [
     "coveralls",
     "validate_version_code",
     "codacy-coverage",
-    "pytest-readme"
+    "pytest-readme",
 ]
 
 setup(
