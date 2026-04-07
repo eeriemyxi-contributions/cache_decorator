@@ -1,7 +1,9 @@
-"""Script to setup the test_readme.py file in the tests directory."""
-
 import os
-from pytest_readme import setup
 
-setup()
-os.rename("test_readme.py", "tests/test_readme.py")
+def pytest_sessionstart(session):
+    """Generate the readme test file before starting the test session."""
+    from pytest_readme import setup
+    setup()
+    
+    if os.path.exists("test_readme.py"):
+        os.replace("test_readme.py", "tests/test_readme.py")
