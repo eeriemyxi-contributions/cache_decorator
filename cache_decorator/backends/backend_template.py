@@ -36,7 +36,7 @@ class BackendTemplate:
             "This backend function has to be implemented by its subclass."
         )
 
-    def dump(self, obj_to_serialize: object, path: str) -> Dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
         """Serialize and save the object at the given path.
         If this backend needs extra informations to de-serialize data, it can
         return them as a dictionary which will be serialized as a json."""

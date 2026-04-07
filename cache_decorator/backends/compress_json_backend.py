@@ -30,7 +30,7 @@ class CompressJsonBackend(BackendTemplate):
     def can_serialize(obj_to_serialize: object, path: str) -> bool:
         return CompressJsonBackend.can_deserialize({}, path)
 
-    def dump(self, obj_to_serialize: object, path: str) -> Dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
         compress_json.dump(obj_to_serialize, path, **self._dump_kwargs)
 
     def load(self, metadata: Dict, path: str) -> object:

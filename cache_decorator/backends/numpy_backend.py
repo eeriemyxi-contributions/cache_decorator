@@ -61,7 +61,7 @@ try:
                 and metadata["type"] == "numpy"
             )
 
-        def dump(self, obj_to_serialize: object, path: str) -> Dict:
+        def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
             if self._pandas_backend is not None and self._pandas_backend.support_path(
                 path
             ):
@@ -88,7 +88,7 @@ try:
             if self._pandas_backend is not None and self._pandas_backend.support_path(
                 path
             ):
-                return self._pandas_backend.load(metadata, path).values
+                return self._pandas_backend.load(metadata, path).values  # type: ignore[reportAttributeAccessIssue]
             if path.endswith(".npy"):
                 with open(path, "rb") as f:
                     return np.load(f)
@@ -107,4 +107,4 @@ try:
                 return objs[objs.files[0]]
 
 except ModuleNotFoundError:
-    NumpyBackend = None
+    NumpyBackend = None  # type: ignore[reportAssignmentType]

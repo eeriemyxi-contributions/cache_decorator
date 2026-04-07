@@ -31,7 +31,7 @@ class CompressPickleBackend(BackendTemplate):
     def can_deserialize(metadata: Dict, path: str) -> bool:
         return CompressPickleBackend.support_path(path)
 
-    def dump(self, obj_to_serialize: object, path: str) -> Dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
         pickle_dump(obj_to_serialize, path, **self._dump_kwargs)
 
     def load(self, metadata: Dict, path: str) -> object:

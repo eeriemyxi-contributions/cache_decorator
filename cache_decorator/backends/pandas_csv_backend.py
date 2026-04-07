@@ -90,7 +90,7 @@ try:
                 obj_to_serialize, pd.DataFrame
             )
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:
+        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:  # type: ignore[reportReturnType]
 
             if not is_consistent(obj_to_serialize.index):
                 warnings.warn("The index" + common_message)
@@ -139,9 +139,9 @@ try:
                 elif dtype == "int":
                     column = int(column)
                 elif dtype == "tuple":
-                    column = tuple(column)
+                    column = tuple(column)  # type: ignore[reportArgumentType]
                 elif dtype == "list":
-                    column = list(column)
+                    column = list(column)  # type: ignore[reportArgumentType]
                 else:
                     raise NotImplementedError(
                         (
@@ -168,4 +168,4 @@ try:
             return df
 
 except ModuleNotFoundError:
-    PandasCsvBackend = None
+    PandasCsvBackend = None  # type: ignore[reportAssignmentType]

@@ -24,7 +24,7 @@ class PickleBackend(BackendTemplate):
     def can_deserialize(metadata: Dict, path: str) -> bool:
         return PickleBackend.support_path(path)
 
-    def dump(self, obj_to_serialize: object, path: str) -> Dict:
+    def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
         with open(path, "wb") as f:
             pickle_dump(obj_to_serialize, f, **self._dump_kwargs)
 

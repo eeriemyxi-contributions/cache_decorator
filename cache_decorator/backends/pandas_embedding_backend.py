@@ -47,13 +47,13 @@ try:
                 and is_numeric_dataframe(obj_to_serialize)
             )
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:
+        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> Dict:  # type: ignore[reportReturnType]
 
             open_prefix = next(
                 v for k, v in self.SUPPORTED_EXTENSIONS.items() if path.endswith(k)
             )
 
-            with tarfile.open(path, mode="w" + open_prefix, **self._dump_kwargs) as tar:
+            with tarfile.open(path, mode="w" + open_prefix, **self._dump_kwargs) as tar:  # type: ignore[reportCallIssue, reportArgumentType]
                 data = pickle.dumps(obj_to_serialize.columns)
                 infos = tarfile.TarInfo("columns.pkl")
                 infos.size = len(data)
@@ -77,16 +77,16 @@ try:
             }
 
         def load(self, metadata: Dict, path: str) -> object:
-            with tarfile.open(path, mode="r", **self._load_kwargs) as tar:
-                columns = pickle.load(tar.extractfile("columns.pkl"))
-                index = pickle.load(tar.extractfile("index.pkl"))
+            with tarfile.open(path, mode="r", **self._load_kwargs) as tar:  # type: ignore[reportCallIssue, reportArgumentType]
+                columns = pickle.load(tar.extractfile("columns.pkl"))  # type: ignore[reportArgumentType]
+                index = pickle.load(tar.extractfile("index.pkl"))  # type: ignore[reportArgumentType]
 
                 array_file = BytesIO()
-                array_file.write(tar.extractfile("values.npy").read())
+                array_file.write(tar.extractfile("values.npy").read())  # type: ignore[reportOptionalMemberAccess, reportArgumentType]
                 array_file.seek(0)
                 values = np.load(array_file)
 
                 return pd.DataFrame(values, columns=columns, index=index)
 
 except ModuleNotFoundError:
-    PandasEmbeddingBackend = None
+    PandasEmbeddingBackend = None  # type: ignore[reportAssignmentType]

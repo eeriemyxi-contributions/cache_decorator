@@ -52,7 +52,7 @@ try:
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
             return KerasModelBackend.support_path(path)
 
-        def dump(self, obj_to_serialize: "Model", path: str) -> Dict:
+        def dump(self, obj_to_serialize: object, path: str) -> Dict:  # type: ignore[reportReturnType]
             from tensorflow.keras.models import (
                 save_model,
             )  # pylint: disable=import-outside-toplevel
@@ -96,4 +96,4 @@ try:
 # a more obscure `TypeError` caused by occasional internal
 # errors of TensorFlow when it is not properly installed.
 except (ModuleNotFoundError, TypeError):
-    KerasModelBackend = None
+    KerasModelBackend = None  # type: ignore[reportAssignmentType]
