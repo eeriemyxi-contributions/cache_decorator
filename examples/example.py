@@ -19,6 +19,12 @@ def cached_function_2(a: Any):
     sleep(2)
     return [1, 2, 3]
 
+@Cache(log_level="debug")
+def cached_function_3(a: int) -> int:
+    """A function that sleeps for 2 seconds and returns a list with log level debug."""
+    sleep(2)
+    return 1
+
 
 if __name__ == "__main__":
 
@@ -33,3 +39,5 @@ if __name__ == "__main__":
     cached_function_2(1)
 
     cached_function_2(2)
+    
+    t = cached_function_3(5)

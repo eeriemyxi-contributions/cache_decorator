@@ -4,14 +4,13 @@ import os
 import sys
 import json
 import pickle
+import typing as t
 
-import datetime
 import inspect
 import logging
 from time import time
 from functools import wraps
 from datetime import datetime
-from typing import Tuple, Callable, Union, Dict, List, Optional
 import humanize
 
 # Dictionary are not hashable and the python hash is not consistent
@@ -29,6 +28,8 @@ from .utils import (
 )
 from .backends import Backend
 
+P = t.ParamSpec("P")
+R = t.TypeVar("R")
 
 log_levels = {
     "debug": logging.DEBUG,
@@ -41,32 +42,49 @@ log_levels = {
 }
 
 
-def cache(function):
+def cache(function: t.Callable[P, R]) -> t.Callable[P, R]:
     """Cache with default parameters"""
     return Cache()(function)
 
 
 class Cache:
     """Cache the results of a function (or method)."""
+    
+    log_level: str
+    log_format: str
+    args_to_ignore: list[str]
+    use_source_code: bool
+    validity_duration: int | float | None
+    use_approximated_hash: bool
+    cache_path: str | tuple[t.Any, ...] | list[t.Any] | dict[str, t.Any]
+    is_backup_enabled: bool
+    backup_path: str | None
+    cache_dir: str
+    logger: logging.Logger | None
+    function_info: dict[str, t.Any] | None
+    decorated_function: t.Callable[..., t.Any] | None
+    load_kwargs: dict[str, t.Any]
+    dump_kwargs: dict[str, t.Any]
+    enable_cache_arg_name: str | None
+    capture_enable_cache_arg_name: bool
+    optional_path_keys: list[str]
 
     def __init__(
         self,
-        cache_path: Union[
-            str, Tuple[str], List[str], Dict[str, str]
-        ] = "{cache_dir}/{function_name}/{_hash}.pkl",
-        args_to_ignore: Tuple[str] = (),
-        cache_dir: Optional[str] = None,
-        validity_duration: Union[int, str] = -1,
+        cache_path: str | tuple[t.Any, ...] | list[t.Any] | dict[str, t.Any] = "{cache_dir}/{function_name}/{_hash}.pkl",
+        args_to_ignore: tuple[str, ...] = (),
+        cache_dir: str | None = None,
+        validity_duration: int | str | None = -1,
         use_source_code: bool = True,
         use_approximated_hash: bool = False,
         log_level: str = "critical",
         log_format: str = "%(asctime)-15s [%(levelname)s]: %(message)s",
-        backup_path: Optional[str] = None,
+        backup_path: str | None = None,
         backup: bool = True,
-        optional_path_keys: Optional[List[str]] = None,
-        dump_kwargs: Optional[Dict] = None,
-        load_kwargs: Optional[Dict] = None,
-        enable_cache_arg_name: Optional[str] = None,
+        optional_path_keys: list[str] | None = None,
+        dump_kwargs: dict[str, t.Any] | None = None,
+        load_kwargs: dict[str, t.Any] | None = None,
+        enable_cache_arg_name: str | None = None,
         capture_enable_cache_arg_name: bool = True,
     ):
         """
@@ -130,7 +148,7 @@ class Cache:
             This is done by saving a json with the same name of the cache plus `_time.json` which contains the
             computation epoch.
             If `validity_duration` is specified and a cache does not have it's json file, it's considered invalid.
-            The given time must be an integer in seconds or a string in the format (\d+[smhdw]) to specify
+            The given time must be an integer in seconds or a string in the format (\\d+[smhdw]) to specify
             a given ammount of s(econds), m(inutes), h(ours), d(ays), w(eeks).
         use_source_code: bool = True,
             If in the computing of the hash the must also use the sourcecode of the cached function.
@@ -199,9 +217,9 @@ class Cache:
         self.backup_path = backup_path
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
 
-        self.logger: Optional[logging.Logger] = None
-        self.function_info: Optional[Dict] = None
-        self.decorated_function: Optional[Callable] = None
+        self.logger = None
+        self.function_info = None
+        self.decorated_function = None
 
         if load_kwargs is None:
             load_kwargs = {}
@@ -212,24 +230,23 @@ class Cache:
         self.enable_cache_arg_name = enable_cache_arg_name
         self.capture_enable_cache_arg_name = capture_enable_cache_arg_name
 
-        self.optional_path_keys = optional_path_keys
+        self.optional_path_keys = optional_path_keys if optional_path_keys is not None else []
 
-        if self.optional_path_keys is None:
-            self.optional_path_keys = []
-        else:
-            if not isinstance(self.cache_path, dict):
-                raise ValueError(
-                    (
-                        f"The argument `optional_path_keys` with value '{self.optional_path_keys}' has no "
-                        f"meaning if the `cache_path` isn't a dict. `cache_path`='{self.cache_path}'"
-                    )
+        if not self.optional_path_keys and not isinstance(self.cache_path, dict):
+            pass # optional_path_keys initialized cleanly to []
+        elif self.optional_path_keys and not isinstance(self.cache_path, dict):
+            raise ValueError(
+                (
+                    f"The argument `optional_path_keys` with value '{self.optional_path_keys}' has no "
+                    f"meaning if the `cache_path` isn't a dict. `cache_path`='{self.cache_path}'"
                 )
+            )
 
         self._check_path_sanity(cache_path)
 
     def _check_path_sanity(
-        self, path: Union[str, Tuple[str], List[str], Dict[str, str]]
-    ):
+        self, path: str | tuple[t.Any, ...] | list[t.Any] | dict[str, t.Any]
+    ) -> None:
         """Check that at least one backend exists that can handle the given path.
         This is just a quality of life check to raise an exception early and not
         after the computation is done."""
@@ -266,7 +283,7 @@ class Cache:
             )
 
     @staticmethod
-    def store(obj, path: str) -> None:
+    def store(obj: t.Any, path: str) -> None:
         """Store an object at a path, this automatically choose the correct backend.
 
         Arguments
@@ -282,7 +299,7 @@ class Cache:
         Backend({}, {}).dump(obj, path)
 
     @staticmethod
-    def load(path: str):
+    def load(path: str) -> t.Any:
         """
         Load an object from a file, this automatically choose the correct backend.
 
@@ -298,7 +315,7 @@ class Cache:
         return Backend({}, {}).load({}, path)
 
     @staticmethod
-    def compute_path(function: Callable, *args, **kwargs) -> str:
+    def compute_path(function: t.Callable[..., t.Any], *args: t.Any, **kwargs: t.Any) -> str:
         """Return the path that a file would have if the given function
         woule be called with the given arguments.
 
@@ -316,7 +333,7 @@ class Cache:
             args, kwargs, function_info=instance._compute_function_info(function)
         )
 
-    def _compute_function_info(self, function: Callable) -> Dict:
+    def _compute_function_info(self, function: t.Callable[..., t.Any]) -> dict[str, t.Any]:
         function_args_specs = inspect.getfullargspec(function)
 
         function_info = {
@@ -337,15 +354,17 @@ class Cache:
 
         return function_info
 
-    def _backup(self, result, path, exception, args, kwargs):
+    def _backup(self, result: t.Any, path: t.Any, exception: t.Any, args: tuple[t.Any, ...], kwargs: dict[str, t.Any]) -> Exception:
         """This function handle the backupping of the data when an the serialization fails."""
+        assert self.logger is not None
+        assert self.function_info is not None
 
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
             return self._backup(result, path[0], exception, args, kwargs)
 
         elif isinstance(path, dict):
-            return self._backup(result, next(path.values()), exception, args, kwargs)
+            return self._backup(result, next(iter(path.values())), exception, args, kwargs)
 
         date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         # Ensure that the we won't overwrite anything
@@ -354,6 +373,10 @@ class Cache:
             rnd = random_string(
                 40
             )  # hardcoded length but if they are enough for git it's enough for us.
+            
+            if self.backup_path is None:
+                self.backup_path = "{cache_path}_backup_{_rnd}.pkl"
+
             backup_path = self._get_formatted_path(
                 args,
                 kwargs,
@@ -395,10 +418,12 @@ class Cache:
         exception.result = result
         return exception
 
-    def _get_metadata_path(self, path):
+    def _get_metadata_path(self, path: str) -> str:
         return path + ".metadata"
 
-    def _is_cache_enabled(self, args, kwargs, inner_self=None):
+    def _is_cache_enabled(self, args: tuple[t.Any, ...], kwargs: dict[str, t.Any], inner_self: t.Any = None) -> tuple[t.Any, tuple[t.Any, ...], dict[str, t.Any]]:
+        assert self.function_info is not None
+        
         # if enable_cache_arg_name is not defined, then forward
         if self.enable_cache_arg_name is None:
             return True, args, kwargs
@@ -451,25 +476,26 @@ class Cache:
 
         return root, args, kwargs
 
-    def _load(self, path):
+    def _load(self, path: t.Any) -> t.Any:
+        assert self.logger is not None
 
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
-            result = []
+            result_list = []
             for p in path:
                 loaded_cache = self._load(p)
 
                 if loaded_cache is None:
                     return None
 
-                result.append(loaded_cache)
+                result_list.append(loaded_cache)
 
             if isinstance(path, tuple):
-                result = tuple(result)
-            return result
+                return tuple(result_list)
+            return result_list
 
         elif isinstance(path, dict):
-            result = {}
+            result_dict = {}
             for key, p in path.items():
                 loaded_cache = self._load(p)
 
@@ -483,8 +509,8 @@ class Cache:
                     else:
                         return None
 
-                result[key] = loaded_cache
-            return result
+                result_dict[key] = loaded_cache
+            return result_dict
 
         # Check if the cache exists and is readable
         if not os.path.isfile(path):
@@ -520,7 +546,7 @@ class Cache:
             metadata.get("backend_metadata", {}), path
         )
 
-    def _check_return_type_compatability(self, result, path):
+    def _check_return_type_compatability(self, result: t.Any, path: t.Any) -> None:
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
             assert isinstance(result, list) or isinstance(result, tuple)
@@ -548,7 +574,11 @@ class Cache:
                 )
             return
 
-    def _dump(self, args, kwargs, result, path, start_time, end_time):
+    def _dump(self, args: tuple[t.Any, ...], kwargs: dict[str, t.Any], result: t.Any, path: t.Any, start_time: float, end_time: float) -> None:
+        assert self.logger is not None
+        assert self.function_info is not None
+        assert self.decorated_function is not None
+
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
             for r, p in zip(result, path):
@@ -595,8 +625,8 @@ class Cache:
             "function_name": self.function_info["function_name"],
             "function_file": "%s:%s"
             % (
-                self.decorated_function.__code__.co_filename,
-                self.decorated_function.__code__.co_firstlineno,
+                t.cast(t.Any, self.decorated_function).__code__.co_filename,
+                t.cast(t.Any, self.decorated_function).__code__.co_firstlineno,
             ),
             "args_to_ignore": self.function_info["args_to_ignore"],
             "source": self.function_info.get("source", None),
@@ -624,21 +654,22 @@ class Cache:
         with open(metadata_path, "w", encoding="utf8") as f:
             json.dump(metadata, f, indent=4)
 
-    def _decorate_function(self, function: Callable) -> Callable:
+    def _decorate_function(self, function: t.Callable[P, R]) -> t.Callable[P, R]:
         # wraps to support pickling
         @wraps(function)
-        def wrapped(*args, **kwargs):
-            cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
+        def wrapped(*args: P.args, **kwargs: P.kwargs) -> R:
+            assert self.logger is not None
+            cache_enabled, args_passed, kwargs_passed = self._is_cache_enabled(args, kwargs)
 
             # if the cache is not enabled just forward the call
             if not cache_enabled:
                 self.logger.info("The cache is disabled")
-                result = function(*args, **kwargs)
+                result = function(*args_passed, **kwargs_passed)
                 self._check_return_type_compatability(result, self.cache_path)
                 return result
 
             # Get the path
-            path = self._get_formatted_path(args, kwargs)
+            path = self._get_formatted_path(args_passed, kwargs_passed)
 
             # Try to load the cache
             result = self._load(path)
@@ -646,19 +677,19 @@ class Cache:
             if result is not None:
                 return result
 
-            self.logger.info("Computing the result for %s %s", args, kwargs)
+            self.logger.info("Computing the result for %s %s", args_passed, kwargs_passed)
             # otherwise compute the result
             start_time = time()
-            result = function(*args, **kwargs)
+            result = function(*args_passed, **kwargs_passed)
             end_time = time()
 
             # Save the result
             try:
                 self._check_return_type_compatability(result, path)
-                self._dump(args, kwargs, result, path, start_time, end_time)
+                self._dump(args_passed, kwargs_passed, result, path, start_time, end_time)
             except Exception as e:
                 if self.is_backup_enabled:
-                    raise self._backup(result, path, e, args, kwargs)
+                    raise self._backup(result, path, e, args_passed, kwargs_passed)
                 raise e
 
             return result
@@ -669,29 +700,30 @@ class Cache:
         setattr(wrapped, "__cacher_instance", self)
         return wrapped
 
-    def _decorate_method(self, function: Callable) -> Callable:
+    def _decorate_method(self, function: t.Callable[P, R]) -> t.Callable[P, R]:
         # wraps to support pickling
         @wraps(function)
-        def wrapped(self, *args, **kwargs):
-            cache_enabled, args, kwargs = self._is_cache_enabled(
-                args, kwargs, inner_self=self
+        def wrapped(inner_self: t.Any, *args: t.Any, **kwargs: t.Any) -> t.Any:
+            assert self.logger is not None
+            cache_enabled, args_passed, kwargs_passed = self._is_cache_enabled(
+                args, kwargs, inner_self=inner_self
             )
 
             # if the cache is not enabled just forward the call
             if not cache_enabled:
                 self.logger.info("The cache is disabled")
-                result = function(self, *args, **kwargs)
+                result = t.cast(t.Callable[..., R], function)(inner_self, *args_passed, **kwargs_passed)
                 self._check_return_type_compatability(result, self.cache_path)
                 return result
 
             # Get the path
-            path = self._get_formatted_path(args, kwargs, inner_self=self)
+            path = self._get_formatted_path(args_passed, kwargs_passed, inner_self=inner_self)
 
             # Check that the self is actually hashable
-            if not issubclass(self, Hashable):
+            if not isinstance(inner_self, Hashable):
                 raise ValueError(
                     (
-                        f"Could not has self of class `{self.__class__.__name__}` "
+                        f"Could not hash self of class `{inner_self.__class__.__name__}` "
                         "because it doesn't implement Hashable (from dict_hash)."
                     )
                 )
@@ -702,19 +734,21 @@ class Cache:
             if result is not None:
                 return result
 
-            self.logger.info("Computing the result for %s %s", args, kwargs)
+            self.logger.info("Computing the result for %s %s", args_passed, kwargs_passed)
             # otherwise compute the result
             start_time = time()
-            result = function(*args, **kwargs)
+            # Function is a method, but `P.args` matching with explicit self requires careful passing
+            # Depending on how it's wrapped, function usually expects self explicitly here
+            result = t.cast(t.Callable[..., R], function)(inner_self, *args_passed, **kwargs_passed)
             end_time = time()
 
             # Save the result
             try:
                 self._check_return_type_compatability(result, path)
-                self._dump(args, kwargs, result, path, start_time, end_time)
+                self._dump(args_passed, kwargs_passed, result, path, start_time, end_time)
             except Exception as e:
                 if self.is_backup_enabled:
-                    raise self._backup(result, path, e, args, kwargs)
+                    raise self._backup(result, path, e, args_passed, kwargs_passed)
                 raise e
 
             return result
@@ -723,35 +757,38 @@ class Cache:
         # The caching if needed
         setattr(wrapped, "__cached_function", function)
         setattr(wrapped, "__cacher_instance", self)
-        return wrapped
+        return t.cast(t.Callable[P, R], wrapped)
 
     def _get_formatted_path(
         self,
-        args,
-        kwargs,
-        formatter=None,
-        function_info=None,
-        extra_kwargs=None,
-        inner_self=None,
-    ) -> str:
+        args: tuple[t.Any, ...],
+        kwargs: dict[str, t.Any],
+        formatter: t.Any = None,
+        function_info: dict[str, t.Any] | None = None,
+        extra_kwargs: dict[str, t.Any] | None = None,
+        inner_self: t.Any = None,
+    ) -> t.Any:
         """Compute the path adding and computing the needed arguments."""
+        assert self.logger is not None
         formatter = formatter or self.cache_path
 
         if isinstance(formatter, list):
-            return [self._get_formatted_path(args, kwargs, f) for f in formatter]
+            return [self._get_formatted_path(args, kwargs, f, function_info, extra_kwargs, inner_self) for f in formatter]
 
         if isinstance(formatter, tuple):
-            return tuple([self._get_formatted_path(args, kwargs, f) for f in formatter])
+            return tuple([self._get_formatted_path(args, kwargs, f, function_info, extra_kwargs, inner_self) for f in formatter])
 
         elif isinstance(formatter, dict):
             return {
-                key: self._get_formatted_path(args, kwargs, v)
+                key: self._get_formatted_path(args, kwargs, v, function_info, extra_kwargs, inner_self)
                 for key, v in formatter.items()
             }
 
         extra_kwargs = extra_kwargs or {}
 
         function_info = function_info or self.function_info
+        assert function_info is not None
+        
         params = get_params(function_info, args, kwargs)
         groups = get_format_groups(formatter)
         groups_set = {match.str_match for match in groups}
@@ -794,9 +831,9 @@ class Cache:
             if new_match.str_match.endswith("()"):
                 new_match.str_match = new_match.str_match[:-2]
                 # Get the name of the base element and the attributes chain
-                root, *attrs = new_match.str_match.split(".")
+                root_name, *attrs = new_match.str_match.split(".")
                 # Get the params to use for the attributes chain
-                root = format_args[root]
+                root = format_args[root_name]
 
                 # Follow the attributes chain
                 for attr in attrs:
@@ -824,14 +861,14 @@ class Cache:
         self.logger.debug("Calculated path %s", path)
         return path
 
-    def _fix_docs(self, function: Callable, wrapped: Callable) -> Callable:
+    def _fix_docs(self, function: t.Callable[P, R], wrapped: t.Callable[P, R]) -> t.Callable[P, R]:
         # Copy the doc of decoreated function
         wrapped.__doc__ = function.__doc__
         # Copy the name of the function and add the suffix _cached
         wrapped.__name__ = get_function_name(function) + "_cached"
         return wrapped
 
-    def decorate(self, function: Callable) -> Callable:
+    def decorate(self, function: t.Callable[P, R]) -> t.Callable[P, R]:
         """Decorate the function with the cache."""
         self.function_info = self._compute_function_info(function)
         self.decorated_function = function
@@ -841,10 +878,10 @@ class Cache:
         else:
             wrapped = self._decorate_function(function)
 
-        wrapped = self._fix_docs(function, wrapped)
+        wrapped = self._fix_docs(t.cast(t.Callable[P, R], function), t.cast(t.Callable[P, R], wrapped))
         return wrapped
 
-    def __call__(self, function):
+    def __call__(self, function: t.Callable[P, R]) -> t.Callable[P, R]:
         self.logger = logging.getLogger(__name__ + "." + get_function_name(function))
         # Do not re-initialize loggers if we have to cache multiple functions
         # with the same name

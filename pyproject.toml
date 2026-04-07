@@ -45,9 +45,17 @@ Homepage = "https://github.com/zommiommy/cache_decorator"
 [tool.hatch.version]
 path = "cache_decorator/__version__.py"
 
-[tool.basedpyright]
+[tool.pyright]
 venvPath = "."
 venv = ".venv"
+include = ["cache_decorator"]
+typeCheckingMode = "standard"
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownParameterType = false
+reportAny = false
+reportUnusedCallResult = false
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules"
